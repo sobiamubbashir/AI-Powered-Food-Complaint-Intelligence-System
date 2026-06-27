@@ -1,0 +1,647 @@
+{
+  "name": "AI-Powered Food Complaint Intelligence System",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "3d435ccf-3fc7-48d7-92b4-6b8bf17bb215",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5c39b4d3-a227-49a2-97ee-361097deef20",
+              "name": "Product",
+              "value": "Chocolate Biscuit",
+              "type": "string"
+            },
+            {
+              "id": "2561e970-1491-4b14-9b34-cd2e1070bbe4",
+              "name": "Complaint",
+              "value": "Customer found glass pieces inside the biscuit. One child suffered cuts in the mouth after eating it. Immediate medical attention was required.",
+              "type": "string"
+            },
+            {
+              "id": "90450de2-ecc5-494e-9eac-903144c1abf5",
+              "name": "source ",
+              "value": "Customer",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "4dc5afe1-6b0e-490b-9494-0823a34daa6c",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-flash-lite-latest",
+          "mode": "list",
+          "cachedResultName": "models/gemini-flash-lite-latest"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a Food Complaint Intelligence System.\n\nAnalyze the complaint and return ONLY JSON.\n\nProduct: {{ $json.Product }}\n\nComplaint: {{$json.complaint}}{{ $json.Complaint }}\n\nSource: {{$json.source}}\n\nReturn this exact structure:\n\n{\n  \"category\": \"\",\n  \"severity\": \"\",\n  \"root_cause\": \"\",\n  \"department\": \"\",\n  \"corrective_action\": \"\",\n  \"preventive_action\": \"\"\n}\n\nDo not provide explanations.\nDo not use markdown.\nReturn only valid JSON."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "c451be1a-b2fb-4a01-bbfc-6c6ff3c77745",
+      "name": "Message a model",
+      "retryOnFail": true,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "l2exjwgqtieNBGh2",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiText = $input.first().json.content.parts[0].text;\nconst aiData = JSON.parse(aiText);\n\n// Get data from the Edit Fields node\nconst original = $(\"Edit Fields\").first().json;\n\nreturn [\n  {\n    json: {\n      Product: original.Product,\n      Complaint: original.Complaint,\n      Source: original[\"source \"], // if your field has a trailing space\n      ...aiData\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        768,
+        0
+      ],
+      "id": "e7d702bb-1a5e-4918-89d0-301632843f49",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "79b888e3-acbe-4ae6-84a4-a3cf5344dddb",
+              "leftValue": "={{$json.severity}}",
+              "rightValue": "High",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "a3d032f6-8029-440d-b341-dc91cc848ab1",
+              "leftValue": "={{$json.severity}}",
+              "rightValue": "Critical",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        976,
+        0
+      ],
+      "id": "148d9fc2-3c18-4853-abcd-c5ee10d6182c",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1xxMRaHpRnro5q9LegG_dTFVxXRM_rsr7Ba9T0JwuDvc",
+          "mode": "list",
+          "cachedResultName": "Food Complaint Intelligence System",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xxMRaHpRnro5q9LegG_dTFVxXRM_rsr7Ba9T0JwuDvc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xxMRaHpRnro5q9LegG_dTFVxXRM_rsr7Ba9T0JwuDvc/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Complaint": "={{$node[\"Edit Fields\"].json.Complaint}}",
+            "Source": "={{$node[\"Edit Fields\"].json[\"source \"]}}",
+            "Category": "={{$json.category}}",
+            "Severity ": "={{$json.severity}}",
+            "Root Cause": "={{$json.root_cause}}",
+            "Department": "={{$json.department}}",
+            "Corrective Action": "={{$json.corrective_action}}",
+            "Preventive Action": "={{$json.preventive_action}}",
+            "Product": "={{$node[\"Edit Fields\"].json.Product}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Product",
+              "displayName": "Product",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Complaint",
+              "displayName": "Complaint",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Source",
+              "displayName": "Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Severity ",
+              "displayName": "Severity ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Root Cause",
+              "displayName": "Root Cause",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Department",
+              "displayName": "Department",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Corrective Action",
+              "displayName": "Corrective Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Preventive Action",
+              "displayName": "Preventive Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "severity",
+              "displayName": "severity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "root_cause",
+              "displayName": "root_cause",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "department",
+              "displayName": "department",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "corrective_action",
+              "displayName": "corrective_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "preventive_action",
+              "displayName": "preventive_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1200,
+        -96
+      ],
+      "id": "0799fb78-f3f5-436e-89e3-ace016da814f",
+      "name": "High Level Risk",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "fdnUcZyGv611mYB1",
+          "name": "Google Sheets account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1xxMRaHpRnro5q9LegG_dTFVxXRM_rsr7Ba9T0JwuDvc",
+          "mode": "list",
+          "cachedResultName": "Food Complaint Intelligence System",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xxMRaHpRnro5q9LegG_dTFVxXRM_rsr7Ba9T0JwuDvc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xxMRaHpRnro5q9LegG_dTFVxXRM_rsr7Ba9T0JwuDvc/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Complaint": "={{$node[\"Edit Fields\"].json.Complaint}}",
+            "Source": "={{$node[\"Edit Fields\"].json[\"source \"]}}",
+            "Category": "={{$json.category}}",
+            "Severity ": "={{$json.severity}}",
+            "Root Cause": "={{$json.root_cause}}",
+            "Department": "={{$json.department}}",
+            "Corrective Action": "={{$json.corrective_action}}",
+            "Preventive Action": "={{$json.preventive_action}}",
+            "Product": "={{$node[\"Edit Fields\"].json.Product}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Product",
+              "displayName": "Product",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Complaint",
+              "displayName": "Complaint",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Source",
+              "displayName": "Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Severity ",
+              "displayName": "Severity ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Root Cause",
+              "displayName": "Root Cause",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Department",
+              "displayName": "Department",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Corrective Action",
+              "displayName": "Corrective Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Preventive Action",
+              "displayName": "Preventive Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "severity",
+              "displayName": "severity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "root_cause",
+              "displayName": "root_cause",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "department",
+              "displayName": "department",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "corrective_action",
+              "displayName": "corrective_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "preventive_action",
+              "displayName": "preventive_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1200,
+        96
+      ],
+      "id": "ac6f8631-c90e-4b0c-ade3-6e50393f5efc",
+      "name": "All Risks",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "fdnUcZyGv611mYB1",
+          "name": "Google Sheets account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "sobiibad2024@gmail.com",
+        "subject": "🚨 High Severity Food Complaint Detected",
+        "emailType": "text",
+        "message": "=A High Severity food complaint has been detected.\n\nProduct: {{$node[\"Edit Fields\"].json.Product}}\n\nComplaint:\n{{$node[\"Edit Fields\"].json.Complaint}}\n\nSource:\n{{$node[\"High Level Risk\"].json.Source}}\n\n\nCategory:\n{{$node[\"Code in JavaScript\"].json.category}}\n\nSeverity:\n{{$node[\"Code in JavaScript\"].json.severity}}\n\nRoot Cause:\n{{$node[\"Code in JavaScript\"].json.root_cause}}\n\nDepartment:\n{{$node[\"Code in JavaScript\"].json.department}}\n\nCorrective Action:\n{{$node[\"Code in JavaScript\"].json.corrective_action}}\n\nPreventive Action:\n{{$node[\"Code in JavaScript\"].json.preventive_action}}\n\nThis alert was generated automatically by the AI-Powered Food Complaint Intelligence System.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1440,
+        0
+      ],
+      "id": "2b8b6618-f80c-46e0-8fd5-f8bdf5bb336b",
+      "name": "Email trigger",
+      "webhookId": "6959786e-825c-4efe-add6-2dc182c8d89c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "K8lbMsz51LTA0GKg",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "High Level Risk",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "All Risks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "High Level Risk": {
+      "main": [
+        [
+          {
+            "node": "Email trigger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "All Risks": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "0fadc883-05a5-4ea1-990c-b4faa1bc66d2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "85b81e6ce086c6f8a6557e5befd45c1d5b8f76e19ab3195bd3d902102ea7f9db"
+  },
+  "id": "jxNBdcdtVme15GcW",
+  "tags": []
+}
