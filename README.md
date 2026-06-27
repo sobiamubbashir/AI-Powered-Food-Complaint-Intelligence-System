@@ -1,5 +1,9 @@
 AI-Powered Food Complaint Intelligence System
 
+🏗️ System Architecture
+
+![Architecture Diagram](architecture-diagram.png)
+
 Overview
 
 The AI-Powered Food Complaint Intelligence System is an intelligent workflow built using **n8n** and **Google Gemini** to automate food complaint analysis.
